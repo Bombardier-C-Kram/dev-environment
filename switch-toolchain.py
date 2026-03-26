@@ -90,6 +90,17 @@ def update_coderules_index(tc: Toolchain) -> str:
     return f"  {CODERULES_INDEX} -> @coderules/{tc.coderules}"
 
 
+def update_claude_doc(tc: Toolchain) -> str:
+    claude_dir = ROOT / "docs" / "claude"
+    claude_dir.mkdir(parents=True, exist_ok=True)
+    for old in claude_dir.glob("claude-*.md"):
+        old.unlink()
+    src = ROOT / "docs" / "coderules" / tc.coderules
+    dst = claude_dir / tc.claude_doc
+    shutil.copy2(src, dst)
+    return f"  docs/claude/{tc.claude_doc} <- docs/coderules/{tc.coderules}"
+
+
 def update_claude_md(tc: Toolchain) -> str:
     path = ROOT / CLAUDE_MD
     text = path.read_text()
@@ -184,6 +195,7 @@ def switch(toolchain_key: str) -> None:
 
     results = [
         update_coderules_index(tc),
+        update_claude_doc(tc),
         update_claude_md(tc),
         update_merge_cmd(tc),
         update_crev_cmd(tc),
@@ -197,8 +209,6 @@ def switch(toolchain_key: str) -> None:
     warnings = []
     if not (ROOT / "docs" / "coderules" / tc.coderules).exists():
         warnings.append(f"docs/coderules/{tc.coderules} does not exist yet")
-    if not (ROOT / "docs" / "claude" / tc.claude_doc).exists():
-        warnings.append(f"docs/claude/{tc.claude_doc} does not exist yet")
 
     if warnings:
         print("\nWarnings:")
